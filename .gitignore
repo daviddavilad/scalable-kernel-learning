@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Build
+build/
+dist/
+*.so
+*.pyd
+*.o
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+
+# Results - can be regenerated, index is tracked
+results/*
+!results/index.csv
+
+# Data
+data/
+
+# LaTeX
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.synctex.gz
+
+# OS / editor
+.DS_Store
+.vscode/*:Zone.Identifier
