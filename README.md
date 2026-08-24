@@ -42,8 +42,10 @@ Camoriano & Rosasco, 2015). The same quantity dominates both the statistics and 
 computation, which leads us in a direction worth exploring and testing.
 
 If the identification is empirically tight, the consequence is more practical: the
-computational budget is a function of the kernel spectrum, readable in advance, and
-sampling below it costs accuracy, while sampling above it wastes compute.
+computational budget is a function of the kernel spectrum, and *readable in advance*.
+We hypothesize that sampling below this scale produces measurable statistical
+degradation, while sampling substantially above it provides diminishing returns
+relative to computational cost.
 
 A second question also follows from this, and the literature has much less to say
 about it. $d_{\text{eff}}$ is derived for the risk of the *mean* predictor. A Gaussian
