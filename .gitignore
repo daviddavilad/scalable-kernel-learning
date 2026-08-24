@@ -19,6 +19,7 @@ compile_commands.json
 # Results - can be regenerated, index is tracked
 results/*
 !results/index.csv
+!results/.gitkeep
 
 # Data
 data/

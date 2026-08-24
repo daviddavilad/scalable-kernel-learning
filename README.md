@@ -29,8 +29,7 @@ known before running anything?**
 
 The theory offers a sensible answer to this question. Define the effective dimension
 
-$$d_{\text{eff}}(\lambda) = \operatorname{tr}\!\left(K(K + \lambda n I)^{-1}\right)
-= \sum_{i=1}^{n} \frac{\sigma_i}{\sigma_i + \lambda n}.$$
+$$d_{\text{eff}}(\lambda) = \mathrm{tr}\left(K(K + \lambda n I)^{-1}\right) = \sum_{i=1}^{n} \frac{\sigma_i}{\sigma_i + \lambda n}.$$
 
 This counts the directions in the data whose signal survives regularization: components
 with $\sigma_i \gg \lambda n$ contribute close to 1 to the sum, components with
@@ -153,48 +152,50 @@ LaTeX, following research standards. Results → figures via a single `make figu
 
 ```
 scalable-kernel-learning/
-├── README.md                  # Problem, hypothesis, method, repo instructions, Randomized Numerical Linear Algebra library use
+├── README.md                      # Problem, hypothesis, method, repo instructions, Randomized Numerical Linear Algebra library use
 ├── pyproject.toml
 ├── uv.lock
 ├── CMakeLists.txt
 ├── configs/
-│   ├── synthetic/             # one YAML per spectrum × n × λ sweep
+│   ├── synthetic/                 # one YAML per spectrum × n × λ sweep
 │   └── real/
 ├── src/
-│   ├── kernels/               # exact KRR, exact GP
-│   │   ├── exact.py
-│   │   └── gp.py
-│   ├── approx/
-│   │   ├── nystrom.py         # uniform + RLS + recursive RLS
-│   │   ├── rff.py
-│   │   └── sparse_gp.py       # SoR/DTC + Titsias VFE
-│   ├── diagnostics/
-│   │   ├── effective_dim.py
-│   │   └── spectrum.py
-│   ├── data/
-│   │   ├── synthetic.py       # prescribed-spectrum generator
-│   │   └── uci.py
-│   ├── eval/
-│   │   ├── metrics.py         # RMSE, NLPD, coverage, KL
-│   │   └── timing.py
-│   └── cpp/
-│       ├── kernel_matrix.cpp  # pybind11 module
-│       ├── kernel_matrix.cu   # CUDA path
-│       └── bindings.cpp
+│   └── skl/
+│       ├── __init__.py
+│       ├── kernels/               # exact KRR, exact GP
+│       │   ├── exact.py
+│       │   └── gp.py
+│       ├── approx/
+│       │   ├── nystrom.py         # uniform + RLS + recursive RLS
+│       │   ├── rff.py
+│       │   └── sparse_gp.py       # SoR/DTC + Titsias VFE
+│       ├── diagnostics/
+│       │   ├── effective_dim.py
+│       │   └── spectrum.py
+│       ├── data/
+│       │   ├── synthetic.py       # prescribed-spectrum generator
+│       │   └── uci.py
+│       ├── eval/
+│       │   ├── metrics.py         # RMSE, NLPD, coverage, KL
+│       │   └── timing.py
+│       └── cpp/
+│           ├── kernel_matrix.cpp  # pybind11 module
+│           ├── kernel_matrix.cu   # CUDA path
+│           └── bindings.cpp
 ├── experiments/
-│   ├── run.py                 # config → parquet
-│   └── figures.py             # parquet → PDF figures
+│   ├── run.py                     # config → parquet
+│   └── figures.py                 # parquet → PDF figures
 ├── tests/
-│   ├── test_exact.py          # vs. sklearn/GPyTorch to 1e-10
-│   ├── test_approx.py         # m = n recovers exact
-│   ├── test_effective_dim.py  # vs. closed form on known spectra
-│   └── test_cpp.py            # C++/CUDA paths agree with NumPy to tol
-├── results/                   # parquet outputs, gitignored; index.csv tracked
-├── docs/                      # general design and project notes
+│   ├── test_exact.py              # vs. sklearn/GPyTorch to 1e-10
+│   ├── test_approx.py             # m = n recovers exact
+│   ├── test_effective_dim.py      # vs. closed form on known spectra
+│   └── test_cpp.py                # C++/CUDA paths agree with NumPy to tol
+├── results/                       # parquet outputs, gitignored; index.csv tracked
+├── docs/                          # general design and project notes
 ├── paper/
 │   ├── main.tex
 │   └── figures/
-└── .github/workflows/ci.yml   # pytest on CPU
+└── .github/workflows/ci.yml       # pytest on CPU
 ```
 
 **Test suite:**
