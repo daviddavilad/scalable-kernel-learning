@@ -31,7 +31,7 @@ def make_spectrum(kind, n, rate):
         raise ValueError(f"rate must be positive, rate = {rate}")
 
     # Integer arrays cannot be raised to a negative power, so index in float.
-
+    j = np.arange(1, n + 1, dtype=np.float64)
 
     if kind == "polynomial":
         spectrum = j ** (-rate)
