@@ -23,6 +23,7 @@ results/*
 
 # Data
 data/
+!src/skl/data/
 
 # LaTeX
 paper/*.aux
