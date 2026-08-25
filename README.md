@@ -1,5 +1,7 @@
 # Scalable Kernel Learning
 
+![CI](https://github.com/daviddavilad/scalable-kernel-learning/actions/workflows/ci.yml/badge.svg)
+
 **Effective dimension as a computational budget: statistical and computational
 tradeoffs in approximate kernel learning.**
 
