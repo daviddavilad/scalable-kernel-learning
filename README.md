@@ -166,7 +166,8 @@ scalable-kernel-learning/
 ├── src/
 │   └── skl/
 │       ├── __init__.py
-│       ├── kernels/               # exact KRR, exact GP
+│       ├── kernels/               # kernel functions, exact KRR, exact GP
+│       │   ├── functions.py       # RBF, Matern
 │       │   ├── exact.py
 │       │   └── gp.py
 │       ├── approx/
