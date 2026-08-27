@@ -11,7 +11,7 @@ Kernel methods make linear algorithms nonlinear by replacing inner products with
 kernel function. As a result, the resulting model is defined by an $n \times n$
 matrix. Kernel ridge regression requires solving the following expression
 
-$$(K + \lambda n I)\,\alpha = y,$$
+$$(K + \lambda n I)\alpha = y,$$
 
 which is $O(n^2)$ in memory and $O(n^3)$ in time. At $n = 50{,}000$ that is
 20 GB in double precision before doing any factorization. Exact kernel methods
