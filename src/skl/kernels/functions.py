@@ -69,6 +69,8 @@ def rbf_kernel(X, Z=None, lengthscale=1.0):
         Kernel matrix.
     """
 
+    X = np.asarray(X, dtype=float)
+
     if Z is None:
         Z = X
     
