@@ -1,7 +1,9 @@
 import numpy as np
 import pytest
 
-from skl.kernels.functions import rbf_kernel
+from skl.kernels.functions import matern_kernel, rbf_kernel
+
+NUS = [0.5, 1.5, 2.5]
 
 def test_rbf_kernel_shape():
     rng = np.random.default_rng(0)
@@ -115,3 +117,71 @@ def test_rbf_kernel_dimension_mismatch_raises():
 
     with pytest.raises(ValueError):
         rbf_kernel(X, Z)
+
+
+@pytest.mark.parametrize("nu", NUS)
+def test_matern_kernel_shape(nu):
+    rng = np.random.default_rng(0)
+
+    X = rng.normal(size=(3, 2))
+    Z = rng.normal(size=(4, 2))
+
+    K = matern_kernel(X, Z, nu=nu)
+
+    assert K.shape == (3, 4)
+
+
+@pytest.mark.parametrize("nu", NUS)
+def test_matern_kernel_symmetry(nu):
+    rng = np.random.default_rng(0)
+
+    X = rng.normal(size=(5, 3))
+
+    K = matern_kernel(X, nu=nu)
+
+    np.testing.assert_allclose(K, K.T)
+
+
+@pytest.mark.parametrize("nu", NUS)
+def test_matern_kernel_unit_diagonal(nu):
+    rng = np.random.default_rng(0)
+
+    X = rng.normal(size=(5, 3))
+
+    K = matern_kernel(X, nu=nu)
+
+    np.testing.assert_allclose(np.diag(K), np.ones(X.shape[0]))
+
+
+@pytest.mark.parametrize("nu", NUS)
+def test_matern_kernel_is_bounded(nu):
+    rng = np.random.default_rng(0)
+
+    X = rng.normal(size=(5, 3))
+
+    K = matern_kernel(X, nu=nu)
+
+    assert np.all(K >= 0.0)
+    assert np.all(K <= 1.0)
+
+
+@pytest.mark.parametrize("nu", NUS)
+def test_matern_kernel_is_positive_semidefinite(nu):
+    rng = np.random.default_rng(0)
+
+    X = rng.normal(size=(8, 3))
+
+    K = matern_kernel(X, nu=nu)
+
+    eigenvalues = np.linalg.eigvalsh(K)
+
+    assert np.all(eigenvalues >= -1e-10)
+
+
+@pytest.mark.parametrize("nu", [1.0, 0.0, -1.0])
+def test_matern_kernel_invalid_nu_raises(nu):
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(5, 3))
+
+    with pytest.raises(ValueError):
+        matern_kernel(X, nu=nu)
