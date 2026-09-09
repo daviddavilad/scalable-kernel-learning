@@ -42,7 +42,15 @@ The choice of basis is what specializes the general framework to a particular LS
 
 Residuals are penalized with a three-region loss:
 
-$$L(e) = \begin{cases} 0, & |e|\leq\varepsilon,\\ \frac{1}{2\delta}(|e|-\varepsilon)^2, & \varepsilon\leq |e|\leq\varepsilon_C,\\ C(|e|-\varepsilon)-\frac12\delta C^2, & |e|\geq\varepsilon_C, \end{cases} \qquad \varepsilon_C=\varepsilon+\delta C.$$
+$$
+L(e) =
+\begin{cases}
+0, & |e|\leq\varepsilon,\\
+\frac{1}{2\delta}(|e|-\varepsilon)^2, & \varepsilon\leq |e|\leq\varepsilon_C,\\
+C(|e|-\varepsilon)-\frac12\delta C^2, & |e|\geq\varepsilon_C,
+\end{cases}
+\qquad \varepsilon_C=\varepsilon+\delta C.
+$$
 
 Interpretation:
 
@@ -70,7 +78,7 @@ $$f(\mathbf{v}_m) = \sum_n(\alpha_n-\alpha_n^*)\mathbf{v}_n^T\mathbf{v}_m.$$
 
 The authors briefly mention that extensions of SVM LSP formulations to the non-linear case can be easily treated by using Mercer's kernels, as usual in the SVM literature.
 
-## What I didn't follow
+## Questions and gaps
 
 SVM regression commonly uses the $\varepsilon$-insensitive loss
 
@@ -92,6 +100,7 @@ The paper introduces/mentions the following concepts that I had not covered yet 
 - **What are all those $\xi$'s?** The paper introduces $\xi_n$ and $\xi_n^*$. These can be thought of as
 
   $$\boxed{\xi = \text{how far outside the acceptable }\varepsilon\text{-tube we are}}$$
+
   Questions: why declare such variables rather than solving for the closed-form solution? Why do we care about how far outside the acceptable $\varepsilon$-tube we are?
 - **Lagrange multipliers** — basic concept for solving constrained optimization, need to understand what it consists of.
 
@@ -106,7 +115,7 @@ Potential limitation / extension I noticed:
 
 - **Model and hyperparameter selection.** The method requires choosing general SVM parameters $(C,\delta,\varepsilon)$ as well as application-specific model parameters (e.g. AR order $P$). The experiments use cross-validation/grid search when these cannot be chosen a priori, suggesting room for more principled or efficient parameter-selection methods.
 
-## Why this might matter for me
+## Relevance to my work
 
 Essentially, any linear LSP problem (in this case ARMA, parametric spectral estimation, etc.) can be solved using SVM methods more accurately, per the reported figures.
 
@@ -118,7 +127,15 @@ But the problem is that squared error gives huge penalties to outliers, when we 
 
 Instead, the authors define the cost model
 
-$$L(e_n)=\begin{cases} 0 & |e_n|\leq\varepsilon\\ \frac{1}{2\delta}(|e_n|-\varepsilon)^2 & \varepsilon\leq |e_n|\leq\varepsilon_C\\ C(|e_n|-\varepsilon)-\frac12\delta C^2 & |e_n|\geq\varepsilon_C \end{cases}$$
+$$
+L(e) =
+\begin{cases}
+0, & |e|\leq\varepsilon,\\
+\frac{1}{2\delta}(|e|-\varepsilon)^2, & \varepsilon\leq |e|\leq\varepsilon_C,\\
+C(|e|-\varepsilon)-\frac12\delta C^2, & |e|\geq\varepsilon_C,
+\end{cases}
+\qquad \varepsilon_C=\varepsilon+\delta C.
+$$
 
 which, put into words, means the following:
 
