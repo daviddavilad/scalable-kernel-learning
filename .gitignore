@@ -26,10 +26,12 @@ data/
 !src/skl/data/
 
 # LaTeX
-paper/*.aux
-paper/*.log
-paper/*.out
-paper/*.synctex.gz
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
 
 # OS / editor
 .DS_Store

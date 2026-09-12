@@ -1,0 +1,97 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+\setlist[itemize]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\setlist[enumerate]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\title{\vspace{-2em}\large Scalable and adaptive sparse Gaussian processes and scalable kernel learning\vspace{-0.5em}}
+\author{\normalsize David Dávila}
+\date{\normalsize\today}
+
+\begin{document}
+
+\maketitle
+\vspace{-1.5em}
+
+\section*{What I have read}
+
+\begin{enumerate}
+  \item \textbf{Gómez-Verdejo, V., Parrado-Hernández, E., \& Martínez-Ramón, M. (2024).} Adaptive sparse Gaussian process.
+  \item \textbf{Rojo-Álvarez, J. L., Camps-Valls, G., Martínez-Ramón, M., Soria-Olivas, E., Navia-Vázquez, Á., \& Figueiras-Vidal, A. R. (2005).} Support vector machines framework for linear signal processing.
+  \item \emph{Gaussian Processes for Machine Learning} (book). Reading chapter 1.
+\end{enumerate}
+
+\section*{Current state of the field}
+
+The literature builds on exact GP as a foundation/benchmark for comparison. Exact GP is $O(N^3)$. To overcome this big computational burden, the literature resorts to sparse GPs (SGPs), which reduce cost but are merely approximating the posterior probability. The limitation for SGPs is that because they are approximating, they tend to be unstable and do not tend to the exact GP, thus defeating the point.
+
+Variational SGPs make the inducing points variational parameters, so the approximation tends to the exact GP, but they are computationally expensive and most of the approaches require that the parameters are fixed in training.
+
+Few of these approaches actually focus on dealing with nonstationarity directly, hence the AGP contribution follows.
+
+\section*{Interesting gaps}
+
+\textbf{Point 1.} AGP is adaptive only to some extent. It adapts where the inducing points sit, which one is replaced, and it optimizes for $\theta$ and $\sigma^2$. It does not adapt \emph{how many inducing points} there are, i.e.\ $M$ is fixed in advance. But in nonstationary environments you can have the case that the optimal $M$ changes with the distribution of the data. For example, if data becomes more nuanced or non-linear, you might need a higher number of inducing points to fully capture the explanatory power.
+
+\textbf{Point 2.} Why? The relevance criterion
+
+\[
+R_m = \sum_{t'=1}^{t} \lambda^{t-t'} k_{mm}^{-1} k_{mt'}^{2}
+\]
+
+is a normalized squared kernel evaluation, weighted by $\lambda$ (resembling a forgetting factor). This looks like a leverage score. I have research background in RNLA. In the Nyström literature, leverage scores are how landmarks get selected. The common approach is to choose a random sample of $m$ columns, but there are better approaches. For example, ridge leverage scores are the principled alternative. For point $i$,
+
+\[
+\ell_i(\lambda) = \left[K\left(K + \lambda n I\right)^{-1}\right]_{ii}.
+\]
+
+Alaoui \& Mahoney (2015) claim that sampling landmarks proportional to these ridge leverage scores gives much better approximation at the same $m$, with \emph{guarantees}. There is an important identity,
+
+\[
+\sum_i \ell_i(\lambda) = \mathrm{tr}\left(K\left(K + \lambda n I\right)^{-1}\right) = d_{\mathrm{eff}}(\lambda).
+\]
+
+In other words, \emph{the effective dimension of the kernel is the total leverage in the problem}. So $d_{\mathrm{eff}}$ tells you how many landmarks are sufficient to solve the problem.
+
+Under a forgetting factor, the effective data distribution changes constantly, so $d_{\mathrm{eff}}$ changes with it. If $M$ should follow it, then a fixed $M$ can be wasteful or insufficient, depending on whether $d_{\mathrm{eff}}$ is greater or smaller than $M$.
+
+\textbf{Point 3.} A separate issue with the paper's contribution is that under option 2 (model update with inference over the model parameters) we change an inducing point,
+
+\[
+u_m^{\mathrm{old}} \rightarrow u_m^{\mathrm{new}},
+\]
+
+and therefore all of its kernel evaluations $k(u_m,x_i)$ change. So you cannot perfectly update everything using only the previous $M\times M$ summary anymore. This is why the authors optionally maintain a sliding window of $T$ recent observations: when they optimize an inducing point or hyperparameters, they can use those recent observations to recompute the relevant quantities. That gives a full parameter-update step complexity of approximately
+
+\[
+\boxed{O(TM^2).}
+\]
+
+The authors emphasize that $T$ can be much smaller than the total number of historical observations $N$. This is somewhat of a rustic approach, since the new inference will never be perfect, especially if we want to keep the cost low with a small window $T$. Hence there must be a better way of solving this problem somehow.
+
+Option 1 (model update without inference over the model parameters) is cheap, but it might not fully reflect changes in the data, since we keep $U$, $\theta$, and $\sigma^2$ fixed and only update the posterior recursively.
+
+\section*{Questions}
+
+\begin{itemize}
+  \item Is $M$ chosen by theory or by hand? Should it adapt as well as $U$?
+  \item What is the relevance criterion $R_m$ approximating?
+  \item Is the sliding window of $T$ observations necessary, or a compromise?
+\end{itemize}
+
+\section*{Interesting research directions}
+
+Whether the Nyström / leverage-score theory can transfer to the AGP problem. What does it say about the optimal $M$.
+
+Scalable kernel learning in general. It does not have to be GP specifically, but based on what I have read, this could definitely be a direction.
+
+\end{document}
