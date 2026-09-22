@@ -39,3 +39,8 @@ data/
 
 # Windows alternate data streams
 *:Zone.Identifier
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
