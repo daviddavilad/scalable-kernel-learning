@@ -1,0 +1,246 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+\setlist[itemize]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\setlist[enumerate]{leftmargin=*,topsep=2pt,itemsep=2pt}
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\tr}{\mathrm{tr}}
+\newcommand{\Neff}{N_{\mathrm{eff}}}
+
+\title{\vspace{-2em}\large Adaptive inducing-point budgets for sparse Gaussian processes under forgetting\vspace{-0.5em}}
+\author{\normalsize David Dávila}
+\date{\normalsize\today}
+
+\begin{document}
+
+\maketitle
+\vspace{-1.5em}
+
+\section{Setting}
+
+Consider GP regression with $N$ observations, $y_i = f(x_i) + \epsilon_i$, $\epsilon_i \sim \mathcal{N}(0,\sigma^2)$, $f \sim \mathcal{GP}(0,k)$. With inducing inputs $U = \{u_1,\ldots,u_M\}$, define
+\[
+Q_{ff} = K_{fu}K_{uu}^{-1}K_{uf}, \qquad R = K_{ff} - Q_{ff}, \qquad t(U) = \tr(R),
+\]
+and $Q_n = Q_{ff} + \sigma^2 I$. The collapsed variational bound (Titsias, 2009) is
+\[
+\mathcal{L}_{\mathrm{lower}} = -\tfrac12 y^\top Q_n^{-1} y - \tfrac12 \log|Q_n| - \tfrac N2 \log(2\pi) - \frac{t}{2\sigma^2},
+\]
+and its gap to the exact log marginal likelihood is exactly the KL divergence from the variational to the exact posterior process (Matthews et al., 2016):
+\[
+\mathcal{L} = \mathcal{L}_{\mathrm{lower}} + \KL(Q\,\|\,\hat P).
+\]
+For outputs drawn from the prior, Burt et al.\ (2019, Lemma 2; proof in their Appendix B) show
+\[
+\frac{t}{2\sigma^2} \;\leq\; \mathbb{E}_y\left[\KL(Q\,\|\,\hat P)\right] \;\leq\; \frac{t}{\sigma^2}.
+\]
+So up to a factor of two, $\mathbb{E}_y[\KL] \propto t$: the residual trace $t$ is the quantity that controls the quality of the approximation. The larger $t$, the larger both bounds, and the worse the approximation.
+
+\section{Forgetting as heteroscedastic noise}
+
+In the streaming setting, at time $n$ we have observed $x_1, \ldots, x_n$. The adaptive sparse GP (Gómez-Verdejo et al., 2024) introduces a forgetting factor $0 < \lambda \leq 1$ through the diagonal matrix
+\[
+\Lambda_n = \mathrm{diag}\left(\lambda^{n-1}, \lambda^{n-2}, \ldots, \lambda, 1\right),
+\]
+and replaces the standard VSGP quantities by exponentially weighted versions:
+\[
+B_\lambda = \left(K_{uu} + \sigma^{-2}K_{uf}\Lambda_n K_{fu}\right)^{-1}, \qquad
+\mu_\lambda = \sigma^{-2}K_{uu}B_\lambda K_{uf}\Lambda_n y, \qquad
+A_\lambda = K_{uu}B_\lambda K_{uu}.
+\]
+The resulting predictive posterior remains Gaussian, $q_\lambda(f_*) = \mathcal{N}(f_* \mid m_{\lambda,*}, v_{\lambda,*})$, with
+\[
+m_{\lambda,*} = \sigma^{-2}k_{u*}^{\top}B_\lambda K_{uf}\Lambda_n y, \qquad
+v_{\lambda,*} = k_{**} + k_{u*}^{\top}\left(B_\lambda - K_{uu}^{-1}\right)k_{u*}.
+\]
+
+\textbf{The forgetting model is an ordinary GP with diagonal noise.}
+For a sparse GP with independent noise of covariance $\Sigma = \mathrm{diag}(\sigma_1^2, \ldots, \sigma_n^2)$, the optimal variational quantities take the usual form with $\sigma^{-2}I$ replaced by $\Sigma^{-1}$:
+\[
+B_\Sigma = \left(K_{uu} + K_{uf}\Sigma^{-1}K_{fu}\right)^{-1}.
+\]
+Choosing noise variances that grow with the age of each observation,
+\[
+\sigma_i^2 = \frac{\sigma^2}{\lambda^{n-i}}, \qquad\text{i.e.}\qquad
+\Sigma_n = \sigma^2\Lambda_n^{-1}, \qquad \Sigma_n^{-1} = \sigma^{-2}\Lambda_n,
+\]
+gives $B_{\Sigma_n} = B_\lambda$, and likewise $\mu_{\Sigma_n} = \mu_\lambda$ and $A_{\Sigma_n} = A_\lambda$. The forgetting factor is therefore equivalent to an ordinary sparse GP in which an observation $n-i$ steps old has its noise variance inflated by $\lambda^{-(n-i)}$: old observations are not removed, instead they are assumed to have higher noise, so the model trusts them progressively less.
+
+\textbf{Consequence for the trace penalty.}
+In the collapsed bound, the trace term comes from the expected log-likelihood under the conditional variance $R_{ii} = \mathrm{Var}(f_i \mid u)$, contributing $R_{ii}/(2\sigma_i^2)$ per observation. Under $\Sigma_n$ the penalty becomes
+\[
+\frac12\,\tr\left(\Sigma_n^{-1}R\right)
+= \frac{1}{2\sigma^2}\sum_{i=1}^{n}\lambda^{n-i}R_{ii}
+= \frac{t_\lambda}{2\sigma^2}.
+\]
+
+\begin{definition}[Forgetting-weighted residual trace]
+For an inducing set $U$ with residual $R = K_{ff} - Q_{ff}$,
+\[
+t_\lambda(U) = \sum_{i=1}^{n}\lambda^{n-i}R_{ii} = \tr\left(\Lambda_n R\right).
+\]
+With $\lambda = 1$ this reduces to $t(U)$, so the results of Burt et al.\ are the special case without forgetting.
+\end{definition}
+
+\section{Optimal $M$}
+
+$M$ is an approximation parameter (quality of the approximation), not a model parameter: the exact GP contains no $M$ in the formulation. The collapsed bound is monotone non-decreasing in $M$ (adding an inducing point cannot lower the optimal bound), so evidence-based selection alone always prefers a larger $M$.
+
+Finding an optimal $M$ therefore requires an explicit cost. Two formulations:
+\begin{itemize}
+  \item \emph{Penalized:} $\displaystyle\min_M\; \mathbb{E}[\KL] + \eta\,c(M)$.
+  \item \emph{Tolerance:} $\displaystyle M^*(\varepsilon) = \min\{M : t_\lambda(U) \leq \varepsilon\}$.
+\end{itemize}
+I propose the tolerance method, because it matches the stopping rule of rank-adaptive decompositions, and $\varepsilon$ has a direct interpretation through the bound of Burt et al.
+
+\textbf{Relation to the other methods discussed.}
+The marginal-value idea is a one-step version of the penalized objective: add $z$ only if $\Delta t_\lambda(z \mid U)/(2\sigma^2) > \eta\,\Delta c(M)$, with $\Delta t_\lambda$ as in Section~\ref{sec:css}. The Bayesian framing gives
+\[
+\log p(M \mid \mathcal{D}) = \mathcal{L}_{\mathrm{lower}}(M) + \log p(M) + \text{const},
+\]
+reading the variational evidence as $\log p(\mathcal{D} \mid M)$, since the exact marginal likelihood does not depend on $M$. As $\mathcal{L}_{\mathrm{lower}}$ is non-decreasing in $M$, an interior mode requires $\log p(M)$ to decrease fast enough, so the prior acts as the cost, $\eta\,c(M) = -\log p(M)$. \textbf{All three formulations are the same problem, with the cost formulated in different ways.}
+
+\begin{definition}[Inducing-point budget at tolerance $\varepsilon$]
+\[
+M^*(\varepsilon) = \min\left\{\, |U| \;:\; t_\lambda(U) \leq \varepsilon \,\right\}.
+\]
+\end{definition}
+
+\section{Inducing points as column subset selection}
+\label{sec:css}
+
+The Nyström approximation is a CUR decomposition of the positive semidefinite matrix $K$ with $I = J$,
+\[
+K \approx K_{:,J}\,K_{J,J}^{-1}\,K_{J,:},
+\]
+where $J$ indexes the inducing set. The residual diagonal $R_{xx} = k(x,x) - k_{xu}K_{uu}^{-1}k_{ux}$ is AGP's representativeness measure $\delta(x)$, and greedy selection by the largest $R_{xx}$ is pivoted Cholesky.
+
+\begin{proposition}[Marginal trace reduction]
+Let $z$ be a candidate inducing input with $R_{zz} > 0$, and write $r_z = k_{fz} - K_{fu}K_{uu}^{-1}k_{uz}$ for the residual cross-covariance between $f$ and $f(z)$ given $u$. Then
+\[
+\Delta t(z \mid U) = t(U) - t(U \cup \{z\}) = \frac{\|r_z\|_2^2}{R_{zz}}, \qquad R_{zz} = k_{zz} - k_{zu}K_{uu}^{-1}k_{uz}.
+\]
+When $z$ is a training input, $r_z = R_{:,z}$ is the corresponding column of $R$.
+\end{proposition}
+
+\begin{proof}
+Write $U' = U \cup \{z\}$ and partition
+\[
+K_{u'u'} = \begin{pmatrix} K_{uu} & k_{uz} \\ k_{zu} & k_{zz} \end{pmatrix}.
+\]
+The Schur complement of $K_{uu}$ is $s = k_{zz} - k_{zu}K_{uu}^{-1}k_{uz} = R_{zz} > 0$, so by the block inverse formula
+\[
+K_{u'u'}^{-1} = \begin{pmatrix} K_{uu}^{-1} + \frac{1}{s}K_{uu}^{-1}k_{uz}k_{zu}K_{uu}^{-1} & -\frac{1}{s}K_{uu}^{-1}k_{uz} \\ -\frac{1}{s}k_{zu}K_{uu}^{-1} & \frac{1}{s} \end{pmatrix}.
+\]
+With $K_{fu'} = \begin{pmatrix} K_{fu} & k_{fz} \end{pmatrix}$, expanding $Q_{U'} = K_{fu'}K_{u'u'}^{-1}K_{u'f}$ and collecting terms gives
+\[
+Q_{U'} = Q_U + \frac{1}{s}\left(k_{fz} - K_{fu}K_{uu}^{-1}k_{uz}\right)\left(k_{fz} - K_{fu}K_{uu}^{-1}k_{uz}\right)^{\top} = Q_U + \frac{r_z r_z^{\top}}{R_{zz}}.
+\]
+Adding one inducing point is therefore a rank-one update of the Nyström approximation, and the residual becomes $R' = R - r_z r_z^{\top}/R_{zz}$. Taking traces,
+\[
+t(U) - t(U') = \frac{\tr\left(r_z r_z^{\top}\right)}{R_{zz}} = \frac{\|r_z\|_2^2}{R_{zz}}. \qedhere
+\]
+\end{proof}
+
+\begin{remark}
+The same rank-one update gives the forgetting-weighted reduction
+\[
+\Delta t_\lambda(z \mid U) = \frac{r_z^{\top}\Lambda_n\, r_z}{R_{zz}}.
+\]
+Moreover, when $z$ is a training input it contributes the term $R_{zz}^2$ to $\|r_z\|_2^2$, so $\Delta t(z \mid U) \geq R_{zz}$: greedy selection by the residual diagonal, as in pivoted Cholesky and AGP's criterion $\delta(z)$, uses a lower bound on the exact trace reduction.
+\end{remark}
+
+\section{Growth law (Burt et al. 2019) to tracking law (ours)}
+
+Throughout this section, assume inputs $x_1, \ldots, x_n$ are drawn i.i.d.\ from a fixed density $p(x)$, and that $k$ is continuous and bounded with Mercer expansion
+\[
+k(x, x') = \sum_{m=1}^{\infty} \gamma_m\,\phi_m(x)\,\phi_m(x'),
+\]
+where $\{\phi_m\}$ are orthonormal in $L^2(p)$ and $\gamma_1 \geq \gamma_2 \geq \cdots \geq 0$. Let $\gamma_m$ be the kernel eigenvalues to avoid a confusion with the forgetting factor $\lambda$.
+
+With eigenfunction inducing features, Burt et al.\ (2019) show $\mathbb{E}_X[t] = N\sum_{m>M}\gamma_m$. The factor $N$ is why $M$ must grow with the dataset size. The question here is what happens to that factor under forgetting.
+
+\begin{proposition}[Weighted expected residual]
+With the eigenfunction inducing features $u_m = \int f(x)\phi_m(x)p(x)\,dx$ for $m = 1, \ldots, M$,
+\[
+\mathbb{E}_X\left[t_\lambda\right] = \frac{1 - \lambda^n}{1 - \lambda}\sum_{m=M+1}^{\infty}\gamma_m \;\leq\; \Neff\sum_{m=M+1}^{\infty}\gamma_m, \qquad \Neff = \frac{1}{1-\lambda}.
+\]
+\end{proposition}
+
+\begin{proof}
+For eigenfunction features, $[Q_{ff}]_{ij} = \sum_{m \leq M}\gamma_m\phi_m(x_i)\phi_m(x_j)$ (Burt et al., 2019, Sec.~3.5). Subtracting from the Mercer expansion gives $R_{ii} = \sum_{m > M}\gamma_m\phi_m(x_i)^2$, and orthonormality gives $\mathbb{E}_{x_i}[\phi_m(x_i)^2] = 1$, so $\mathbb{E}[R_{ii}] = \sum_{m>M}\gamma_m$ for every $i$. By linearity,
+\[
+\mathbb{E}_X[t_\lambda] = \sum_{i=1}^{n}\lambda^{n-i}\,\mathbb{E}[R_{ii}] = \left(\sum_{i=1}^{n}\lambda^{n-i}\right)\sum_{m>M}\gamma_m,
+\]
+and the geometric sum equals $(1-\lambda^n)/(1-\lambda) \leq 1/(1-\lambda)$.
+\end{proof}
+
+Compared with the unweighted result, the factor $N$ is replaced by a quantity bounded independently of $n$. This is why the budget need not grow with the length of the stream.
+
+\begin{corollary}[Stationary budget, SE kernel]
+Let $k$ be the one-dimensional squared exponential kernel with variance $v$ and lengthscale $\ell$, and let $p(x) = \mathcal{N}(0, s^2)$. With $a = 1/(4s^2)$, $b = 1/(2\ell^2)$, $c = \sqrt{a^2 + 2ab}$, $A = a + b + c$ and $B = b/A$, the eigenvalues are $\gamma_m = v\sqrt{2a/A}\,B^{m-1}$ with $0 < B < 1$ (Zhu et al., 1997), and $\mathbb{E}_X[t_\lambda] \leq \varepsilon$ whenever
+\[
+M \geq \frac{\log\!\big(C_0 \Neff/\varepsilon\big)}{\log(1/B)}, \qquad C_0 = \frac{v\sqrt{2a}}{(1-B)\sqrt{A}}.
+\]
+In particular, $M = O\big(\log(\Neff/\varepsilon)\big)$, independent of $n$.
+\end{corollary}
+
+\begin{proof}
+The geometric series gives $\sum_{m>M}\gamma_m = C_0 B^M$. By the proposition, $\mathbb{E}_X[t_\lambda] \leq C_0 \Neff B^M$, which is at most $\varepsilon$ exactly when $M$ satisfies the stated inequality.
+\end{proof}
+
+This is Burt et al.'s $M = O(\log N)$ with the sample size replaced by the effective sample size $\Neff$.
+
+\textbf{Important assumption of the corollary.} It assumes a fixed input density and eigenfunction features. First, for ordinary inducing points selected from data, the k-DPP bound of Burt et al.\ introduces an additional factor of $M+1$. Second, and more importantly, under nonstationarity the input density $p_n(x)$ changes over time, so the spectrum $\{\gamma_m\}$ is itself time-dependent and no single budget suffices. Note also that these results concern $t_\lambda$, so converting them into statements about the KL divergence requires the analogue of Burt et al.'s Lemma 2 under heteroscedastic noise (open question 1).
+
+\begin{conjecture}[Tracking law]
+Under a slowly varying input density $p_n(x)$, the budget $M^*(\varepsilon)$ required to keep $t_\lambda \leq \varepsilon$ tracks the spectral tail of the forgetting-weighted covariance operator at time $n$, rather than growing with $n$.
+\end{conjecture}
+
+\section{Difference between approaches}
+
+\textbf{Burt et al.\ (2019)} establish how the inducing-point budget must scale with the dataset size for the sparse variational posterior to converge to the exact one. Their bounds are governed by the spectral tail, $\mathbb{E}_X[t] = N\sum_{m>M}\gamma_m$, which yields a priori growth laws such as $M = O(\log^D N)$ for the squared exponential kernel with Gaussian inputs. These are schedules fixed in advance by the kernel spectrum and input distribution, in a static batch setting: they say how large $M$ must be for a given $N$, but not whether the current inducing set should grow or shrink given the current data.
+
+\textbf{Gómez-Verdejo et al.\ (2024)} make the variational sparse GP adaptive through a forgetting factor and a single-inducing-point update. At each step the method adapts \emph{where} the inducing points lie, \emph{which} one is replaced, and the hyperparameters $\theta$ and $\sigma^2$. It never adapts \emph{how many} inducing points there are: $M$ is fixed before learning begins.
+
+\textbf{Tóth et al.\ (2025)} introduce a principled forgetting mechanism in random Fourier signature features, learning channel-wise decay rates that set the model's effective context length. The feature budget, however, is fixed in advance ($D = 200$ features per level in their experiments), and their sparse GP baselines likewise use a hand-picked number of inducing points ($M = 5$ in their experiments).
+
+Taken together, existing adaptive methods address \emph{temporal} adaptation (how much of the past to remember) but the approximation budget is always chosen beforehand. The complementary problem of \emph{representational} adaptation, how much capacity the approximation needs at the current time, remains open. This is the question addressed here.
+
+\section{Proposed direction: grow and prune}
+
+My proposed direction is:
+\begin{enumerate}
+  \item \emph{Grow:} add $z$ when $\Delta t_\lambda(z \mid U)$ exceeds a threshold tied to $\varepsilon$.
+  \item \emph{Prune:} remove the inducing point with the least relevance $\rho_m$ (AGP's relevance criterion) when $t_\lambda$ is well below $\varepsilon$.
+\end{enumerate}
+Evaluating $\Delta t_\lambda$ requires the residual column $r_z$ over the effective window. Over a window of $T$ observations this costs $O(TM)$ per candidate, which is cheaper than AGP's $O(TM^2)$ update, so it may be computable exactly. If the window is too large or the kernel matrix cannot be accessed directly, the residual would have to be estimated from partial access, using randomized error estimation.
+
+\section{Open questions}
+
+\begin{enumerate}
+  \item Does Burt et al.'s Lemma 2 carry over under heteroscedastic noise, giving $\mathbb{E}_y[\KL] \leq t_\lambda/\sigma^2$? And does it survive the misspecification that the true noise is $\sigma^2$ for every observation, rather than $\sigma^2/\lambda^{n-i}$?
+  \item Is $r_z$ cheap enough to compute exactly over the window, or must $\|r_z\|_2^2$ be estimated?
+  \item Should the tolerance $\varepsilon$ be fixed, or tied to $\sigma^2$ and $\Neff$?
+  \item Can randomly pivoted Cholesky, which samples pivots with probability proportional to the residual diagonal $\delta(z)$, replace greedy selection and improve on the $M+1$ factor of the k-DPP bound?
+\end{enumerate}
+
+\end{document}
